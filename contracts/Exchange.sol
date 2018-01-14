@@ -10,12 +10,35 @@ contract Exchange is owned {
     ///////////////////////
 
     struct Offer {
+        uint amount;
+        address who;
     }
 
     struct OrderBook {
+        uint higherPrice;
+        uint lowerPrice;
+        
+        mapping (uint => Offer) offers;
+        
+        uint offers_key;
+        uint offers_length;
     }
 
     struct Token {
+        address tokenContract;
+        string symbolName;
+
+        mapping (uint => OrderBook) buyBook;
+
+        uint curBuyPrice;
+        uint lowestBuyPrice;
+        uint amountBuyPrices;
+
+        mapping (uint => OrderBook) sellBook;
+
+        uint curSellPrice;
+        uint highestSellPrice;
+        uint amountSellPrices;
     }
 
     // Max amount of tokens supported is 255
