@@ -38,23 +38,23 @@ contract Exchange is owned {
     // DEPOSIT / WITHDRAWAL ETHER //
     ////////////////////////////////
 
-    function depositEther() payable {
+    function depositEther() public payable {
     }
 
-    function withdrawEther(uint amountInWei) {
+    function withdrawEther(uint amountInWei) public {
     }
 
-    function getEthBalanceInWei() constant returns (uint) {
+    function getEthBalanceInWei() public constant returns (uint) {
     }
 
     //////////////////////
     // TOKEN MANAGEMENT //
     //////////////////////
 
-    function addToken(string symbolName, address erc20TokenAddress) onlyowner {
+    function addToken(string symbolName, address erc20TokenAddress) public onlyowner {
     }
 
-    function hasToken(string symbolName) constant returns (bool) {
+    function hasToken(string symbolName) public constant returns (bool) {
     }
 
 
@@ -65,39 +65,39 @@ contract Exchange is owned {
     // DEPOSIT / WITHDRAWAL TOKEN //
     ////////////////////////////////
 
-    function depositToken(string symbolName, uint amount) {
+    function depositToken(string symbolName, uint amount) public {
     }
 
-    function withdrawToken(string symbolName, uint amount) {
+    function withdrawToken(string symbolName, uint amount) public {
     }
 
-    function getBalance(string symbolName) constant returns (uint) {
+    function getBalance(string symbolName) public constant returns (uint) {
     }
 
     ///////////////////////////////////
     // ORDER BOOK - BID / ASK ORDERS //
     ///////////////////////////////////
 
-    function getBuyOrderBook(string symbolName) constant returns (uint[], uint[]) {
+    function getBuyOrderBook(string symbolName) public constant returns (uint[], uint[]) {
     }
 
-    function getSellOrderBook(string symbolName) constant returns (uint[], uint[]) {
+    function getSellOrderBook(string symbolName) public constant returns (uint[], uint[]) {
     }
 
     /////////////////////////////////
     // NEW ORDER - BID / ASK ORDER //
     /////////////////////////////////
 
-    function buyToken(string symbolName, uint priceInWei, uint amount) {
+    function buyToken(string symbolName, uint priceInWei, uint amount) public {
     }
 
-    function sellToken(string symbolName, uint priceInWei, uint amount) {
+    function sellToken(string symbolName, uint priceInWei, uint amount) public {
     }
 
     ////////////////////////////////
     // CANCEL ORDER - LIMIT ORDER //
     ////////////////////////////////
 
-    function cancelOrder(string symbolName, bool isSellOrder, uint priceInWei, uint offerKey) {
+    function cancelOrder(string symbolName, bool isSellOrder, uint priceInWei, uint offerKey) public {
     }
 }
