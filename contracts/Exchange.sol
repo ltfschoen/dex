@@ -125,16 +125,26 @@ contract Exchange is owned {
         bytes storage a = bytes(_a);
         bytes memory b = bytes(_b);
 
-        // Compare two strings quickly by length to try to avoid detailed loop comparison
-        if (a.length != b.length)
-            return false;
+        // // Compare two strings quickly by length to try to avoid detailed loop comparison
+        // // - Transaction cost (with 5x characters): ~24k gas
+        // // - Execution cost upon early exit here: ~1.8k gas
+        // if (a.length != b.length)
+        //     return false;
         
-        // Compare two strings in detail Bit-by-Bit
-        for (uint i = 0; i < a.length; i++)
-            if (a[i] != b[i])
-                return false;
+        // // Compare two strings in detail Bit-by-Bit
+        // // - Transaction cost (with 5x characters): ~29.5k gas
+        // // - Execution cost (with 5x characters): ~7.5k gas
+        // for (uint i = 0; i < a.length; i++)
+        //     if (a[i] != b[i])
+        //         return false;
 
-        // Byte values of string are the same
+        // // Byte values of string are the same
+        // return true;
+
+        // Compare two strings using SHA3, which is supposedly more Gas Efficient 
+        // // - Transaction cost (with 5x characters): ~24k gas
+        // // - Execution cost upon early exit here: ~2.4k gas
+        if (sha3(a) != sha3(b)) { return false; }
         return true;
     }
 
