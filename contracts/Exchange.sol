@@ -75,13 +75,67 @@ contract Exchange is owned {
     //////////////////////
 
     function addToken(string symbolName, address erc20TokenAddress) public onlyowner {
+        // Modifier checks if caller is Admin "owner" of the Contract otherwise return early
+
+        // Use `hasToken` to check if given Token Symbol Name 
+        // with ERC-20 Token Address is already in the Exchange
+        require(!hasToken(symbolName));
+
+        // If given Token is not already in the Exchange then:
+        // - Increment the `symbolNameIndex` by 1
+        // - Assign to a Mapping a new entry with the new `symbolNameIndex`,
+        //   and the given Token Symbol Name and ERC-20 Token Address
+        // Note: Throw an exception upon failure
+        symbolNameIndex++;
+        tokens[symbolNameIndex].symbolName = symbolName;
+        tokens[symbolNameIndex].tokenContract = erc20TokenAddress;
     }
 
     function hasToken(string symbolName) public constant returns (bool) {
+        uint8 index = getSymbolIndex(symbolName);
+        if (index == 0) {
+            return false;
+        }
+        return true;
     }
 
-
     function getSymbolIndex(string symbolName) internal returns (uint8) {
+        for (uint8 i = 1; i <= symbolNameIndex; i++) {
+            if (stringsEqual(tokens[i].symbolName, symbolName)) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    ////////////////////////////////
+    // STRING COMPARISON FUNCTION //
+    ////////////////////////////////
+
+    // TODO - Try using sha3 to compare strings since it should use less gas than the loop comparing bytes
+    function stringsEqual(string storage _a, string memory _b) internal returns (bool) {
+        // Note:
+        // - `storage` is default for Local Variables
+        // - `storage` is what variables are forced to be if they are State Variables
+        // - `memory` is the default for Function Parameters (and Function Return Parameters)
+        //
+        // Since first Function Parameter is a Local Variable (from the Mapping defined in the Class)
+        // it is assigned as a `storage` Variable, whereas since the second Function Parameter is
+        // a direct Function Argument it is assigned as a `memory` Variable
+        bytes storage a = bytes(_a);
+        bytes memory b = bytes(_b);
+
+        // Compare two strings quickly by length to try to avoid detailed loop comparison
+        if (a.length != b.length)
+            return false;
+        
+        // Compare two strings in detail Bit-by-Bit
+        for (uint i = 0; i < a.length; i++)
+            if (a[i] != b[i])
+                return false;
+
+        // Byte values of string are the same
+        return true;
     }
 
     ////////////////////////////////
