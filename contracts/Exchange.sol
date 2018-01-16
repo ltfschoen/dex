@@ -142,8 +142,8 @@ contract Exchange is owned {
         // return true;
 
         // Compare two strings using SHA3, which is supposedly more Gas Efficient 
-        // // - Transaction cost (with 5x characters): ~24k gas
-        // // - Execution cost upon early exit here: ~2.4k gas
+        // - Transaction cost (with 5x characters): ~24k gas
+        // - Execution cost upon early exit here: ~2.4k gas
         if (sha3(a) != sha3(b)) { return false; }
         return true;
     }
