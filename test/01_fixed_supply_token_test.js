@@ -1,60 +1,60 @@
 // Specifically request an abstraction for FixedSupplyToken
-var fixedSupplyToken = artifacts.require("FixedSupplyToken");
+const fixedSupplyToken = artifacts.require("FixedSupplyToken");
 
-contract('FixedSupplyToken', function(accounts) {
-  it("first account is owner and should own all tokens upon deployment of FixedSupplyToken contract", function() {
-    var _totalSupply;
-    var myTokenInstance;
-    return fixedSupplyToken.deployed().then(function(instance) {
+contract('FixedSupplyToken', (accounts) => {
+  it("first account is owner and should own all tokens upon deployment of FixedSupplyToken contract", () => {
+    let _totalSupply;
+    let myTokenInstance;
+    return fixedSupplyToken.deployed().then((instance) => {
       myTokenInstance = instance;
       return myTokenInstance.totalSupply.call();
-    }).then(function(totalSupply) {
+    }).then((totalSupply) => {
       _totalSupply = totalSupply;
       return myTokenInstance.balanceOf(accounts[0]);
-    }).then(function(balanceAccountOwner) {
+    }).then((balanceAccountOwner) => {
       assert.equal(balanceAccountOwner.toNumber(), _totalSupply.toNumber(), "Total Amount of tokens is owned by owner");
     });
   });
 
-  it("second account in TestRPC should own no tokens", function() {
-    var myTokenInstance;
-    return fixedSupplyToken.deployed().then(function(instance) {
+  it("second account in TestRPC should own no tokens", () => {
+    let myTokenInstance;
+    return fixedSupplyToken.deployed().then((instance) => {
       myTokenInstance = instance;
       return myTokenInstance.balanceOf(accounts[1]);
-    }).then(function(balanceAccountOwner) {
+    }).then((balanceAccountOwner) => {
       assert.equal(balanceAccountOwner.toNumber(), 0, "Total Amount of tokens is owned by some other address");
     });
   });
 
-  it("should send token correctly between accounts", function() {
-    var token;
+  it("should send token correctly between accounts", () => {
+    let token;
 
     // Get initial balances of first and second account
-    var account_one = accounts[0];
-    var account_two = accounts[1];
+    const account_one = accounts[0];
+    const account_two = accounts[1];
 
-    var account_one_starting_balance;
-    var account_two_starting_balance;
-    var account_one_ending_balance;
-    var account_two_ending_balance;
+    let account_one_starting_balance;
+    let account_two_starting_balance;
+    let account_one_ending_balance;
+    let account_two_ending_balance;
 
-    var amount = 10;
+    let amount = 10;
 
-    return fixedSupplyToken.deployed().then(function(instance) {
+    return fixedSupplyToken.deployed().then((instance) => {
       token = instance;
       return token.balanceOf.call(account_one);
-    }).then(function(balance) {
+    }).then((balance) => {
       account_one_starting_balance = balance.toNumber();
       return token.balanceOf.call(account_two);
-    }).then(function(balance) {
+    }).then((balance) => {
       account_two_starting_balance = balance.toNumber();
       return token.transfer(account_two, amount, {from: account_one});
-    }).then(function() {
+    }).then(() => {
       return token.balanceOf.call(account_one);
-    }).then(function(balance) {
+    }).then((balance) => {
       account_one_ending_balance = balance.toNumber();
       return token.balanceOf.call(account_two);
-    }).then(function(balance) {
+    }).then((balance) => {
       account_two_ending_balance = balance.toNumber();
 
       assert.equal(account_one_ending_balance, account_one_starting_balance - amount, "Amount was not correctly received from the sender");

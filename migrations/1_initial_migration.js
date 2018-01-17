@@ -1,6 +1,6 @@
-var Migrations = artifacts.require("./Migrations.sol");
+const Migrations = artifacts.require("./Migrations.sol");
 
-module.exports = function(deployer, network, accounts) {
+module.exports = (deployer, network, accounts) => {
   if (network == "development") {
     deployer.deploy(Migrations);
   }
