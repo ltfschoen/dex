@@ -62,12 +62,26 @@ contract Exchange is owned {
     ////////////////////////////////
 
     function depositEther() public payable {
+        // Overflow check since `uint` (i.e. uint 256) in mapping for 
+        // tokenBalanceForAddress has upper limit and undesirably 
+        // restarts from zero again if we overflow the limit
+        require(balanceEthForAddress[msg.sender] + msg.value >= balanceEthForAddress[msg.sender]);
+        balanceEthForAddress[msg.sender] += msg.value;
     }
 
     function withdrawEther(uint amountInWei) public {
+        // Balance sufficient to withdraw check
+        require(balanceEthForAddress[msg.sender] - amountInWei >= 0);
+        // Overflow check
+        require(balanceEthForAddress[msg.sender] - amountInWei <= balanceEthForAddress[msg.sender]);
+        // Deduct from balance and transfer the withdrawal amount
+        balanceEthForAddress[msg.sender] -= amountInWei;
+        msg.sender.transfer(amountInWei);
     }
 
     function getEthBalanceInWei() public constant returns (uint) {
+        // Get balance in Wei of calling address
+        return balanceEthForAddress[msg.sender];
     }
 
     //////////////////////
@@ -106,6 +120,12 @@ contract Exchange is owned {
             }
         }
         return 0;
+    }
+
+    function getSymbolIndexOrThrow(string symbolName) returns (uint8) {
+        uint8 index = getSymbolIndex(symbolName);
+        require(index > 0);
+        return index;
     }
 
     ////////////////////////////////
@@ -153,12 +173,39 @@ contract Exchange is owned {
     ////////////////////////////////
 
     function depositToken(string symbolName, uint amount) public {
+        uint8 symbolNameIndex = getSymbolIndexOrThrow(symbolName);
+        // Check the Token Contract Address is initialised and not an uninitialised address(0) aka "0x0"
+        require(tokens[symbolNameIndex].tokenContract != address(0));
+
+        ERC20Interface token = ERC20Interface(tokens[symbolNameIndex].tokenContract);
+
+        // Transfer an amount to this DEX from the calling address 
+        require(token.transferFrom(msg.sender, address(this), amount) == true);
+        // Overflow check
+        require(tokenBalanceForAddress[msg.sender][symbolNameIndex] + amount >= tokenBalanceForAddress[msg.sender][symbolNameIndex]);
+        // Credit the DEX token balance for the callinging address with the transferred amount 
+        tokenBalanceForAddress[msg.sender][symbolNameIndex] += amount;
     }
 
     function withdrawToken(string symbolName, uint amount) public {
+        uint8 symbolNameIndex = getSymbolIndexOrThrow(symbolName);
+        require(tokens[symbolNameIndex].tokenContract != address(0));
+
+        ERC20Interface token = ERC20Interface(tokens[symbolNameIndex].tokenContract);
+
+        // Check sufficient balance to withdraw requested amount
+        require(tokenBalanceForAddress[msg.sender][symbolNameIndex] - amount >= 0);
+        // Overflow check to ensure future balance less than or equal to the current balance after deducting the withdrawn amount
+        require(tokenBalanceForAddress[msg.sender][symbolNameIndex] - amount <= tokenBalanceForAddress[msg.sender][symbolNameIndex]);
+        // Deduct amount requested to be withdrawing from the DEX Token Balance
+        tokenBalanceForAddress[msg.sender][symbolNameIndex] -= amount;
+        // Check that the `transfer` function of the Token Contract returns true
+        require(token.transfer(msg.sender, amount) == true);
     }
 
     function getBalance(string symbolName) public constant returns (uint) {
+        uint8 symbolNameIndex = getSymbolIndexOrThrow(symbolName);
+        return tokenBalanceForAddress[msg.sender][symbolNameIndex];
     }
 
     ///////////////////////////////////
