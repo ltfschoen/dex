@@ -1,7 +1,8 @@
 // Specifically request an abstraction for FixedSupplyToken
 const fixedSupplyToken = artifacts.require("FixedSupplyToken");
 
-contract('FixedSupplyToken', (accounts) => {
+contract('FixedSupplyToken - initial account token ownership upon deployment', (accounts) => {
+
   it("first account is owner and should own all tokens upon deployment of FixedSupplyToken contract", () => {
     let _totalSupply;
     let myTokenInstance;
