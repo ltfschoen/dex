@@ -3,7 +3,7 @@ const owned = artifacts.require("./owned.sol");
 const Exchange = artifacts.require("./Exchange.sol");
 
 module.exports = (deployer) => {
-  deployer.deploy(FixedSupplyToken);
-  deployer.deploy(owned);
-  deployer.deploy(Exchange);
+    deployer.deploy(FixedSupplyToken);
+    deployer.deploy(owned);
+    deployer.deploy(Exchange);
 };
