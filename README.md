@@ -16,7 +16,7 @@ npm install -g ganache-cli
 * Terminal Tab 2 - Start Ethereum Blockchain Protocol Node Simulation
 
 ```
-ganache-cli
+ganache-cli --mnemonic "copy obey episode awake damp vacant protect hold wish primary travel shy"
 ```
 
 * Terminal Tab 1 - Compile and Deploy the FixedSupplyToken Contract
@@ -25,7 +25,7 @@ ganache-cli
 truffle migrate --network development
 ```
 
-* Terminal Tab 1 - Run Sample Unit Tests on the Truffle Contract. Truffle Re-Deploys the MetaCoin Contracts
+* Terminal Tab 1 - Run Sample Unit Tests on the Truffle Contract. Truffle Re-Deploys the Contracts
 
 ```
 truffle test
