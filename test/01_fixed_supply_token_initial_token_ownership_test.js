@@ -13,7 +13,7 @@ contract('FixedSupplyToken - initial account token ownership upon deployment', (
             _totalSupply = totalSupply;
             return myTokenInstance.balanceOf(accounts[0]);
         }).then((balanceAccountOwner) => {
-            assert.equal(balanceAccountOwner.toNumber(), _totalSupply.toNumber(), "Total Amount of tokens is owned by owner");
+            assert.equal(balanceAccountOwner.toNumber(), _totalSupply.toNumber(), "Total Amount of tokens should be owned by owner");
         });
     });
 
@@ -23,7 +23,7 @@ contract('FixedSupplyToken - initial account token ownership upon deployment', (
             myTokenInstance = instance;
             return myTokenInstance.balanceOf(accounts[1]);
         }).then((balanceAccountOwner) => {
-            assert.equal(balanceAccountOwner.toNumber(), 0, "Total Amount of tokens is owned by some other address");
+            assert.equal(balanceAccountOwner.toNumber(), 0, "Total Amount of tokens should be owned by some other address");
         });
     });
 
