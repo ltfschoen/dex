@@ -13,7 +13,8 @@ contract('FixedSupplyToken - initial account token ownership upon deployment', (
             _totalSupply = totalSupply;
             return myTokenInstance.balanceOf(accounts[0]);
         }).then((balanceAccountOwner) => {
-            assert.equal(balanceAccountOwner.toNumber(), _totalSupply.toNumber(), "Total Amount of tokens should be owned by owner");
+            assert.equal(balanceAccountOwner.toNumber(), _totalSupply.toNumber(), "Total Amount of \
+                tokens should be owned by owner");
         });
     });
 
@@ -23,7 +24,8 @@ contract('FixedSupplyToken - initial account token ownership upon deployment', (
             myTokenInstance = instance;
             return myTokenInstance.balanceOf(accounts[1]);
         }).then((balanceAccountOwner) => {
-            assert.equal(balanceAccountOwner.toNumber(), 0, "Total Amount of tokens should be owned by some other address");
+            assert.equal(balanceAccountOwner.toNumber(), 0, "Total Amount of tokens should be owned \
+                by some other address");
         });
     });
 
@@ -58,8 +60,14 @@ contract('FixedSupplyToken - initial account token ownership upon deployment', (
         }).then((balance) => {
             account_two_ending_balance = balance.toNumber();
 
-            assert.equal(account_one_ending_balance, account_one_starting_balance - amount, "Amount was not correctly received from the sender");
-            assert.equal(account_two_ending_balance, account_two_starting_balance + amount, "Amount was not correctly sent to the receiver");
+            assert.equal(
+                account_one_ending_balance, account_one_starting_balance - amount, 
+                "Amount was not correctly received from the sender"
+            );
+            assert.equal(
+                account_two_ending_balance, account_two_starting_balance + amount, 
+                "Amount was not correctly sent to the receiver"
+            );
         });
     });
 });

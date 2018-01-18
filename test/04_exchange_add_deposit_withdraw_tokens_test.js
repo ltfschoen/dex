@@ -1,9 +1,10 @@
 const fixedSupplyToken = artifacts.require("./FixedSupplyToken.sol");
 const exchange = artifacts.require("./Exchange.sol");
 
-contract('Exchange - add token into DEX, deposit token into DEX from an account and then withdraw it again', (accounts) => {
+contract('Exchange - add token into DEX, deposit token into DEX from an account and then withdraw \
+          it again', (accounts) => {
 
-    it("should DEX owner to add token to DEX", () => {
+    it("should allow DEX owner to add token to DEX", () => {
         let myTokenInstance;
         let myExchangeInstance;
         return fixedSupplyToken.deployed().then((instance) => {
@@ -40,7 +41,8 @@ contract('Exchange - add token into DEX, deposit token into DEX from an account 
         }).then((txResult) => {
             return myExchangeInstance.getBalance("FIXED");
         }).then((balanceToken) => {
-            assert.equal(balanceToken, 2000, "DEX should have 2000 tokens for the account address that is calling the DEX");
+            assert.equal(balanceToken, 2000, "DEX should have 2000 tokens for the \
+                account address that is calling the DEX");
         });
     });
 
@@ -74,8 +76,16 @@ contract('Exchange - add token into DEX, deposit token into DEX from an account 
             return  myTokenInstance.balanceOf.call(accounts[0]);
         }).then((balanceToken) => {
             balanceTokenInTokenAfterWithdrawal = balanceToken.toNumber();
-            assert.equal(balanceTokenInExchangeAfterWithdrawal, 0, "DEX should have 0 tokens left after the withdrawal");
-            assert.equal(balanceTokenInTokenAfterWithdrawal, balancedTokenInExchangeBeforeWithdrawal + balanceTokenInTokenBeforeWithdrawal, "Token Contract should have all the tokens withdrawn from the DEX");
+            assert.equal(
+                balanceTokenInExchangeAfterWithdrawal, 
+                0, 
+                "DEX should have 0 tokens left after the withdrawal"
+            );
+            assert.equal(
+                balanceTokenInTokenAfterWithdrawal, 
+                balancedTokenInExchangeBeforeWithdrawal + balanceTokenInTokenBeforeWithdrawal, 
+                "Token Contract should have all the tokens withdrawn from the DEX"
+            );
         });
     });
 });
