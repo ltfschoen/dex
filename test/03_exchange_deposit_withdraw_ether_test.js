@@ -1,7 +1,7 @@
 const fixedSupplyToken = artifacts.require("./FixedSupplyToken.sol");
 const exchange = artifacts.require("./Exchange.sol");
 
-contract('Exchange - deposit Ether into DEX from an account address and then withdraw it again', (accounts) => {
+contract('Exchange - deposit Ether into DEX from an account address and then withdraw it again and emit events', (accounts) => {
 
     it("should be possible to Deposit and Withdrawal Ether", () => {
         let myExchangeInstance;
@@ -16,6 +16,12 @@ contract('Exchange - deposit Ether into DEX from an account address and then wit
             // DEPOSIT INTO DEX FROM A GIVEN ACCOUNT ADDRESS
             return myExchangeInstance.depositEther({from: accounts[0], value: web3.toWei(1, "ether")});
         }).then((txHash) => {
+            // Event Log Test
+            assert.equal(
+                txHash.logs[0].event, 
+                "DepositForEthReceived",
+                "DepositForEthReceived event should be emitted"
+            );
             totalGasCostAccumulated += txHash.receipt.cumulativeGasUsed * web3.eth.getTransaction(txHash.receipt.transactionHash).gasPrice.toNumber();
             balanceAfterDeposit = web3.eth.getBalance(accounts[0]);
             return myExchangeInstance.getEthBalanceInWei.call();
@@ -32,6 +38,12 @@ contract('Exchange - deposit Ether into DEX from an account address and then wit
             // WITHDRAW FROM DEX TO THE ACCOUNT ADDRESS OF THE CALLER
             return myExchangeInstance.withdrawEther(web3.toWei(1, "ether"));
         }).then((txHash) => {
+            // Event Log Test
+            assert.equal(
+                txHash.logs[0].event, 
+                "WithdrawalEth",
+                "WithdrawalEth event should be emitted"
+            );
             totalGasCostAccumulated += txHash.receipt.cumulativeGasUsed * web3.eth.getTransaction(txHash.receipt.transactionHash).gasPrice.toNumber();
             balanceAfterWithdrawal = web3.eth.getBalance(accounts[0]);
             return myExchangeInstance.getEthBalanceInWei.call();

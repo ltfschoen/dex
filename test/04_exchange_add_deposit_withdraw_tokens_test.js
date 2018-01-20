@@ -4,26 +4,40 @@ const exchange = artifacts.require("./Exchange.sol");
 contract('Exchange - add token into DEX, deposit token into DEX from an account and then withdraw \
           it again', (accounts) => {
 
-    it("should allow DEX owner to add token to DEX", () => {
+    it("should allow DEX owner to add token to DEX and emit event", () => {
         let myTokenInstance;
         let myExchangeInstance;
+        let tokenSymbol = "FIXED";
         return fixedSupplyToken.deployed().then((instance) => {
             myTokenInstance = instance;
             return exchange.deployed();
         }).then(function (exchangeInstance) {
             myExchangeInstance = exchangeInstance;
-            return myExchangeInstance.addToken("FIXED", myTokenInstance.address);
-        }).then(function () {
-            return myExchangeInstance.hasToken.call("FIXED");
+            return myExchangeInstance.addToken(tokenSymbol, myTokenInstance.address);
+        }).then(function (txHash) {
+            // console.log(txHash);
+            // Event Log Test
+            assert.equal(
+                txHash.logs[0].event, 
+                "TokenAddedToSystem",
+                "TokenAddedToSystem event should be emitted"
+            );
+            assert.equal(
+                txHash.logs[0].args['_token'], 
+                "FIXED",
+                `TokenAddedToSystem event should have added ${tokenSymbol} token`
+            );
+            // console.log(txResult.logs[0].args['_token']);
+            return myExchangeInstance.hasToken.call(tokenSymbol);
         }).then(function (booleanHasToken) {
-            assert.equal(booleanHasToken, true, "Token provided could not be added to DEX");
+            assert.equal(booleanHasToken, true, `Token ${tokenSymbol} provided could not be added to DEX`);
             return myExchangeInstance.hasToken.call("SOMETHING");
         }).then(function (booleanHasNotToken) {
             assert.equal(booleanHasNotToken, false, "Token provided was found by was never added to DEX");
         });
     });
 
-    it("should allow an account address to Deposit Tokens into DEX", () => {
+    it("should allow an account address to Deposit Tokens into DEX and emit event", () => {
         let myExchangeInstance;
         let myTokenInstance;
         return fixedSupplyToken.deployed().then((instance) => {
@@ -38,7 +52,13 @@ contract('Exchange - add token into DEX, deposit token into DEX from an account 
             return myTokenInstance.approve(myExchangeInstance.address, 2000);
         }).then((txResult) => {
             return myExchangeInstance.depositToken("FIXED", 2000);
-        }).then((txResult) => {
+        }).then((txHash) => {
+            // Event Log Test
+            assert.equal(
+                txHash.logs[0].event, 
+                "DepositForTokenReceived",
+                "DepositForTokenReceived event should be emitted"
+            );
             return myExchangeInstance.getBalance("FIXED");
         }).then((balanceToken) => {
             assert.equal(balanceToken, 2000, "DEX should have 2000 tokens for the \
@@ -69,7 +89,13 @@ contract('Exchange - add token into DEX, deposit token into DEX from an account 
         }).then((balanceToken) => {
             balanceTokenInTokenBeforeWithdrawal = balanceToken.toNumber();
             return myExchangeInstance.withdrawToken("FIXED", balancedTokenInExchangeBeforeWithdrawal);
-        }).then((txResult) => {
+        }).then((txHash) => {
+            // Event Log Test
+            assert.equal(
+                txHash.logs[0].event, 
+                "WithdrawalToken",
+                "WithdrawalToken event should be emitted"
+            );
             return myExchangeInstance.getBalance.call("FIXED");
         }).then((balanceExchange) => {
             balanceTokenInExchangeAfterWithdrawal = balanceExchange.toNumber();
