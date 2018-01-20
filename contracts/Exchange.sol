@@ -57,6 +57,30 @@ contract Exchange is owned {
     // EVENTS //
     ////////////
 
+    // Add Token to DEX
+    event TokenAddedToSystem(uint _symbolIndex, string _token, uint _timestamp);
+
+
+    // Deposit / Withdrawal of Tokens
+    event DepositForTokenReceived(address indexed _from, uint indexed _symbolIndex, uint _amount, uint _timestamp);
+    event WithdrawalToken(address indexed _to, uint indexed _symbolIndex, uint _amount, uint _timestamp);
+    
+    // Deposit / Withdrawal of Ether
+    event DepositForEthReceived(address indexed _from, uint _amount, uint _timestamp);
+    event WithdrawalEth(address indexed _to, uint _amount, uint _timestamp);
+
+    // Creation of Buy / Sell Limit Orders
+    event LimitBuyOrderCreated(uint indexed _symbolIndex, address indexed _who, uint _amountTokens, uint _priceInWei, uint _orderKey);
+    event LimitSellOrderCreated(uint indexed _symbolIndex, address indexed _who, uint _amountTokens, uint _priceInWei, uint _orderKey);
+
+    // Fulfillment of Buy / Sell Order
+    event BuyOrderFulfilled(uint indexed _symbolIndex, uint _amount, uint _priceInWei, uint _orderKey);
+    event SellOrderFulfilled(uint indexed _symbolIndex, uint _amount, uint _priceInWei, uint _orderKey);
+
+    // Cancellation of Buy / Sell Order
+    event BuyOrderCanceled(uint indexed _symbolIndex, uint _priceInWei, uint _orderKey);
+    event SellOrderCanceled(uint indexed _symbolIndex, uint _priceInWei, uint _orderKey);
+
     ////////////////////////////////
     // DEPOSIT / WITHDRAWAL ETHER //
     ////////////////////////////////
@@ -67,6 +91,7 @@ contract Exchange is owned {
         // restarts from zero again if we overflow the limit
         require(balanceEthForAddress[msg.sender] + msg.value >= balanceEthForAddress[msg.sender]);
         balanceEthForAddress[msg.sender] += msg.value;
+        DepositForEthReceived(msg.sender, msg.value, now);
     }
 
     function withdrawEther(uint amountInWei) public {
@@ -77,6 +102,7 @@ contract Exchange is owned {
         // Deduct from balance and transfer the withdrawal amount
         balanceEthForAddress[msg.sender] -= amountInWei;
         msg.sender.transfer(amountInWei);
+        WithdrawalEth(msg.sender, amountInWei, now);
     }
 
     function getEthBalanceInWei() public constant returns (uint) {
@@ -103,6 +129,7 @@ contract Exchange is owned {
         symbolNameIndex++;
         tokens[symbolNameIndex].symbolName = symbolName;
         tokens[symbolNameIndex].tokenContract = erc20TokenAddress;
+        TokenAddedToSystem(symbolNameIndex, symbolName, now);
     }
 
     function hasToken(string symbolName) public constant returns (bool) {
@@ -185,6 +212,7 @@ contract Exchange is owned {
         require(tokenBalanceForAddress[msg.sender][symbolNameIndex] + amount >= tokenBalanceForAddress[msg.sender][symbolNameIndex]);
         // Credit the DEX token balance for the callinging address with the transferred amount 
         tokenBalanceForAddress[msg.sender][symbolNameIndex] += amount;
+        DepositForTokenReceived(msg.sender, symbolNameIndex, amount, now);
     }
 
     function withdrawToken(string symbolName, uint amount) public {
@@ -201,6 +229,7 @@ contract Exchange is owned {
         tokenBalanceForAddress[msg.sender][symbolNameIndex] -= amount;
         // Check that the `transfer` function of the Token Contract returns true
         require(token.transfer(msg.sender, amount) == true);
+        WithdrawalToken(msg.sender, symbolNameIndex, amount, now);
     }
 
     function getBalance(string symbolName) public constant returns (uint) {
