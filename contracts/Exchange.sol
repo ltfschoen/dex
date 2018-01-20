@@ -238,21 +238,29 @@ contract Exchange is owned {
     }
 
     ///////////////////////////////////
-    // ORDER BOOK - BID / ASK ORDERS //
+    // ORDER BOOK - BID ORDERS       //
     ///////////////////////////////////
 
     function getBuyOrderBook(string symbolName) public constant returns (uint[], uint[]) {
     }
 
+    ///////////////////////////////////
+    // ORDER BOOK - ASK ORDERS       //
+    ///////////////////////////////////
+
     function getSellOrderBook(string symbolName) public constant returns (uint[], uint[]) {
     }
 
     /////////////////////////////////
-    // NEW ORDER - BID / ASK ORDER //
+    // NEW ORDER - BID ORDER       //
     /////////////////////////////////
 
     function buyToken(string symbolName, uint priceInWei, uint amount) public {
     }
+
+    /////////////////////////////////
+    // NEW ORDER - ASK ORDER       //
+    /////////////////////////////////
 
     function sellToken(string symbolName, uint priceInWei, uint amount) public {
     }
