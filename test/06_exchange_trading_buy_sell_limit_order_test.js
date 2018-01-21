@@ -95,4 +95,42 @@ contract('Exchange - Buy, Sell, and Cancel Limit Orders', (accounts) => {
             assert.equal(orderBook[1].length, 2, "OrderBook should have 2 sell volume elements");
         });
     });
+
+    it("should be possible to Create and Cancel a Buy Limit Order", () => {
+        let myExchangeInstance;
+        let orderBookLengthBeforeBuy, orderBookLengthAfterBuy, orderBookLengthAfterCancel, orderKey;
+        return exchange.deployed().then((instance) => {
+            myExchangeInstance = instance;
+            return myExchangeInstance.getBuyOrderBook.call("FIXED");
+        }).then((orderBook) => {
+            orderBookLengthBeforeBuy = orderBook[0].length;
+            console.log(`Order Book Length Before Buy: ${orderBookLengthBeforeBuy}`);
+            // Buy Limit Order for 5x "FIXED"-Tokens @ 2.2 Finney each (End of the Linked List)
+            return myExchangeInstance.buyToken("FIXED", web3.toWei(2.2, "finney"), 5);
+        }).then((txResult) => {
+            // Event Log Test
+            assert.equal(txResult.logs.length, 1, "One Log Message should be emitted.");
+            assert.equal(txResult.logs[0].event, "LimitBuyOrderCreated", "Log Event should be LimitBuyOrderCreated");
+            orderKey = txResult.logs[0].args._orderKey;
+            return myExchangeInstance.getBuyOrderBook.call("FIXED");
+        }).then((orderBook) => {
+            orderBookLengthAfterBuy = orderBook[0].length;
+            console.log(`Order Book Length After Buy: ${orderBookLengthAfterBuy}`);
+            assert.equal(orderBookLengthAfterBuy, orderBookLengthBeforeBuy + 1, "OrderBook should have 1 Buy Offer more than before");
+            return myExchangeInstance.cancelOrder("FIXED", false, web3.toWei(2.2, "finney"), orderKey);
+        }).then((txResult) => {
+            console.log(txResult);
+            console.log(txResult.logs[0].args);
+            assert.equal(txResult.logs[0].event, "BuyOrderCanceled", "Log Event should be BuyOrderCanceled");
+            return myExchangeInstance.getBuyOrderBook.call("FIXED");
+        }).then((orderBook) => {
+            orderBookLengthAfterCancel = orderBook[0].length;
+            console.log(orderBook[1][orderBookLengthAfterCancel-1])
+            assert.equal(
+                orderBookLengthAfterCancel, 
+                orderBookLengthAfterBuy, 
+                "OrderBook should have 1 Buy Offers. It is setting Volume to zero instead of Cancelling it");
+            assert.equal(orderBook[1][orderBookLengthAfterCancel-1], 0, "Available Volume should be zero");
+        });
+    });
 });
