@@ -580,5 +580,34 @@ contract Exchange is owned {
     ////////////////////////////////
 
     function cancelOrder(string symbolName, bool isSellOrder, uint priceInWei, uint offerKey) public {
+        // Retrieve Token Symbol Name Index
+        uint8 symbolNameIndex = getSymbolIndexOrThrow(symbolName);
+
+        // Case 1: Cancel Sell Limit Order
+        if (isSellOrder) {
+            // Verify that Caller Address of Cancel Order Function matches Original Address that Created Sell Limit Order 
+            // Note: `offerKey` obtained in front-end logic from Event Emitted at Creation of Sell Limit Order 
+            require(tokens[symbolNameIndex].sellBook[priceInWei].offers[offerKey].who == msg.sender);
+            // Obtain Tokens Amount that were to be sold in the Sell Limit Order
+            uint tokensAmount = tokens[symbolNameIndex].sellBook[priceInWei].offers[offerKey].amount;
+            // Overflow Check
+            require(tokenBalanceForAddress[msg.sender][symbolNameIndex] + tokensAmount >= tokenBalanceForAddress[msg.sender][symbolNameIndex]);
+            // Refund Tokens back to Balance
+            tokenBalanceForAddress[msg.sender][symbolNameIndex] += tokensAmount;
+            tokens[symbolNameIndex].sellBook[priceInWei].offers[offerKey].amount = 0;
+            SellOrderCanceled(symbolNameIndex, priceInWei, offerKey);
+
+        }
+        // Case 2: Cancel Buy Limit Order
+        else {
+            require(tokens[symbolNameIndex].buyBook[priceInWei].offers[offerKey].who == msg.sender);
+            uint etherToRefund = tokens[symbolNameIndex].buyBook[priceInWei].offers[offerKey].amount * priceInWei;
+            // Overflow Check
+            require(balanceEthForAddress[msg.sender] + etherToRefund >= balanceEthForAddress[msg.sender]);
+            // Refund Ether back to Balance 
+            balanceEthForAddress[msg.sender] += etherToRefund;
+            tokens[symbolNameIndex].buyBook[priceInWei].offers[offerKey].amount = 0;
+            BuyOrderCanceled(symbolNameIndex, priceInWei, offerKey);
+        }
     }
 }
