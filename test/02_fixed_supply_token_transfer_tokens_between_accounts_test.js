@@ -34,8 +34,15 @@ contract('FixedSupplyToken - token transfer between accounts', (accounts) => {
         }).then((balance) => {
             account_two_ending_balance = balance.toNumber();
 
-            assert.equal(account_one_ending_balance, account_one_starting_balance - amount, "Amount was not correctly received from the sender");
-            assert.equal(account_two_ending_balance, account_two_starting_balance + amount, "Amount was not correctly sent to the receiver");
+            assert.equal(
+                account_one_ending_balance, account_one_starting_balance - amount, 
+                "Amount was not correctly received from the sender"
+            );
+            assert.equal(
+                account_two_ending_balance, 
+                account_two_starting_balance + amount, 
+                "Amount was not correctly sent to the receiver"
+            );
         });
     });
 });
