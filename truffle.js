@@ -4,8 +4,8 @@ module.exports = {
   networks: {
     development: {
       host: "127.0.0.1",
-      port: 8545,
-      network_id: "*", // Match any network id
+      port: 8500,
+      network_id: "3", // Match any network id
       gas: 4712388,
       gasPrice: 100000000000,
       // Mnemonic: "copy obey episode awake damp vacant protect hold wish primary travel shy"

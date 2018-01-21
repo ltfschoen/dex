@@ -81,7 +81,7 @@ truffle migrate --network development
 npm install -g ganache-cli
 ```
 
-  * Start Ethereum Blockchain Protocol Node Simulation with 10x Accounts on http://localhost:8545
+  * Start Ethereum Blockchain Protocol Node Simulation with 10x Accounts on http://localhost:8500
     * Creates 10x Private Keys and provides a Mnemonic. Assigns to each associated Address 100 Ether.
     * Note: Private Keys may be imported into Metamask Client 
     * Note: Mnemonic may be used subsequently with Ethereum TestRPC to re-create the Accounts with `
@@ -93,7 +93,7 @@ ganache-cli
   * Restart TestRPC with Same Accounts (i.e. `ganache-cli --mnemonic "copy obey episode awake damp vacant protect hold wish primary travel shy"`)
 
 ```
-ganache-cli --mnemonic <INSERT_MNEMONIC> 
+ganache-cli --port 8500 --mnemonic <INSERT_MNEMONIC> 
 ```
 
 * Add FixedSupplyToken to Truffle Contracts folder
