@@ -397,6 +397,10 @@ contract Exchange is owned {
 
                         // Overflow Checks
                         require(tokenBalanceForAddress[msg.sender][tokenNameIndex] + volumeAtPriceFromAddress >= tokenBalanceForAddress[msg.sender][tokenNameIndex]);
+                        
+                        // FIXME - DEBUGGING
+                        revert();
+
                         require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherAvailable >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
 
                         // Increase the Buyer's Account Balance of tokens by the amount the Sell Offer Entry is willing to accept in exchange for the ETH
@@ -414,6 +418,9 @@ contract Exchange is owned {
                         require(tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount > amountNecessary);
 
                         totalAmountOfEtherNecessary = amountNecessary * whilePrice;
+
+                        // FIXME - DEBUGGING
+                        revert();
 
                         // Overflow Check
                         require(balanceEthForAddress[msg.sender] - totalAmountOfEtherNecessary <= balanceEthForAddress[msg.sender]);
