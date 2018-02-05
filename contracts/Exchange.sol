@@ -341,6 +341,7 @@ contract Exchange is owned {
     // NEW ORDER - BID ORDER       //
     /////////////////////////////////
 
+    // Market Buy Order Function
     // User wants to Buy X-Coins @ Y-Price per coin
     function buyToken(string symbolName, uint priceInWei, uint amount) {
         // Obtain Symbol Index for given Symbol Name
@@ -348,19 +349,20 @@ contract Exchange is owned {
         uint totalAmountOfEtherNecessary = 0;
         uint totalAmountOfEtherAvailable = 0;
 
-        // Calculate Ether Balance necessary to Buy the Token Symbol Name.
-        totalAmountOfEtherNecessary = amount * priceInWei;
-
-        // Overflow Checks
-        require(totalAmountOfEtherNecessary >= amount);
-        require(totalAmountOfEtherNecessary >= priceInWei);
-        require(balanceEthForAddress[msg.sender] >= totalAmountOfEtherNecessary);
-        require(balanceEthForAddress[msg.sender] - totalAmountOfEtherNecessary >= 0);
-
-        // Deduct from Exchange Balance the Ether amount necessary the Buy Limit Order.
-        balanceEthForAddress[msg.sender] -= totalAmountOfEtherNecessary;
-
         if (tokens[tokenNameIndex].amountSellPrices == 0 || tokens[tokenNameIndex].curSellPrice > priceInWei) {
+            // Calculate Ether Balance necessary to Buy the Token Symbol Name.
+            totalAmountOfEtherNecessary = amount * priceInWei;
+
+            // Overflow Checks
+            require(totalAmountOfEtherNecessary >= amount);
+            require(totalAmountOfEtherNecessary >= priceInWei);
+            require(balanceEthForAddress[msg.sender] >= totalAmountOfEtherNecessary);
+            require(balanceEthForAddress[msg.sender] - totalAmountOfEtherNecessary >= 0);
+            require(balanceEthForAddress[msg.sender] - totalAmountOfEtherNecessary <= balanceEthForAddress[msg.sender]);
+
+            // Deduct from Exchange Balance the Ether amount necessary the Buy Limit Order.
+            balanceEthForAddress[msg.sender] -= totalAmountOfEtherNecessary;
+
             // Create New Limit Order in the Order Book if either:
             // - No Sell Orders already exist that match the Buy Price Price Offered by the function caller
             // - Existing Sell Price is greater than the Buy Price Offered by the function caller
@@ -374,8 +376,72 @@ contract Exchange is owned {
             // Execute Market Buy Order Immediately if:
             // - Existing Sell Limit Order exists that is less than or equal to the Buy Price Offered by the function caller
 
-            // TODO - Not implemented so throw an exception
-            revert();
+            uint whilePrice = tokens[tokenNameIndex].curSellPrice;
+            uint amountNecessary = amount;
+            uint offers_key;
+            while (whilePrice <= priceInWei && amountNecessary > 0) {
+                offers_key = tokens[tokenNameIndex].sellBook[whilePrice].offers_key;
+                while (offers_key <= tokens[tokenNameIndex].sellBook[whilePrice].offers_length && amountNecessary > 0) {
+                    uint volumeAtPriceFromAddress = tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount;
+
+                    if (volumeAtPriceFromAddress <= amountNecessary) {
+                        totalAmountOfEtherAvailable = volumeAtPriceFromAddress * whilePrice;
+
+                        require(balanceEthForAddress[msg.sender] >= totalAmountOfEtherAvailable);
+                        require(balanceEthForAddress[msg.sender] - totalAmountOfEtherAvailable <= balanceEthForAddress[msg.sender]);
+
+                        balanceEthForAddress[msg.sender] -= totalAmountOfEtherAvailable;
+
+                        require(tokenBalanceForAddress[msg.sender][tokenNameIndex] + volumeAtPriceFromAddress >= tokenBalanceForAddress[msg.sender][tokenNameIndex]);
+                        require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherAvailable >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
+
+                        tokenBalanceForAddress[msg.sender][tokenNameIndex] += volumeAtPriceFromAddress;
+                        tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount = 0;
+                        balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] += totalAmountOfEtherAvailable;
+                        tokens[tokenNameIndex].sellBook[whilePrice].offers_key++;
+
+                        SellOrderFulfilled(tokenNameIndex, volumeAtPriceFromAddress, whilePrice, offers_key);
+
+                        amountNecessary -= volumeAtPriceFromAddress;
+                    } else {
+                        require(tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount > amountNecessary);
+
+                        totalAmountOfEtherNecessary = amountNecessary * whilePrice;
+
+                        require(balanceEthForAddress[msg.sender] - totalAmountOfEtherNecessary <= balanceEthForAddress[msg.sender]);
+
+                        balanceEthForAddress[msg.sender] -= totalAmountOfEtherNecessary;
+
+                        require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherNecessary >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
+
+                        tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount -= amountNecessary;
+                        balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] += totalAmountOfEtherNecessary;
+                        tokenBalanceForAddress[msg.sender][tokenNameIndex] += amountNecessary;
+                        amountNecessary = 0;
+
+                        SellOrderFulfilled(tokenNameIndex, amountNecessary, whilePrice, offers_key);
+                    }
+
+                    if (
+                        offers_key == tokens[tokenNameIndex].sellBook[whilePrice].offers_length &&
+                        tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount == 0
+                    ) {
+                        tokens[tokenNameIndex].amountSellPrices--;
+                        if (whilePrice == tokens[tokenNameIndex].sellBook[whilePrice].higherPrice || tokens[tokenNameIndex].buyBook[whilePrice].higherPrice == 0) {
+                            tokens[tokenNameIndex].curSellPrice = 0;
+                        } else {
+                            tokens[tokenNameIndex].curSellPrice = tokens[tokenNameIndex].sellBook[whilePrice].higherPrice;
+                            tokens[tokenNameIndex].sellBook[tokens[tokenNameIndex].buyBook[whilePrice].higherPrice].lowerPrice = 0;
+                        }
+                    }
+                    offers_key++;
+                }
+                whilePrice = tokens[tokenNameIndex].curSellPrice;
+            }
+
+            if (amountNecessary > 0) {
+                buyToken(symbolName, priceInWei, amountNecessary);
+            }
         }
     }
 
@@ -466,6 +532,7 @@ contract Exchange is owned {
     // NEW ORDER - ASK ORDER       //
     /////////////////////////////////
 
+    // Market Sell Order Function
     // User wants to Sell X-Coins @ Y-Price per coin
     function sellToken(string symbolName, uint priceInWei, uint amount) public {
         // Obtain Symbol Index for given Symbol Name
