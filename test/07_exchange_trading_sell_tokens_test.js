@@ -6,6 +6,7 @@ contract('Exchange - Sell Tokens', (accounts) => {
     before(() => {
         let instanceExchange;
         let instanceToken;
+        console.log(`Block Gas Limit ${eth.getBlock("latest")}`)
         return exchange.deployed().then((instance) => {
             instanceExchange = instance;
             return instanceExchange.depositEther({

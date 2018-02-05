@@ -343,11 +343,10 @@ contract Exchange is owned {
 
     // Market Buy Order Function
     // User wants to Buy X-Coins @ Y-Price per coin
-    function buyToken(string symbolName, uint priceInWei, uint amount) {
+    function buyToken(string symbolName, uint priceInWei, uint amount) public {
         // Obtain Symbol Index for given Symbol Name
         uint8 tokenNameIndex = getSymbolIndexOrThrow(symbolName);
         uint totalAmountOfEtherNecessary = 0;
-        uint totalAmountOfEtherAvailable = 0;
 
         if (tokens[tokenNameIndex].amountSellPrices == 0 || tokens[tokenNameIndex].curSellPrice > priceInWei) {
             // Calculate Ether Balance necessary to Buy the Token Symbol Name.
@@ -376,6 +375,7 @@ contract Exchange is owned {
             // Execute Market Buy Order Immediately if:
             // - Existing Sell Limit Order exists that is less than or equal to the Buy Price Offered by the function caller
 
+            uint totalAmountOfEtherAvailable = 0;
             uint whilePrice = tokens[tokenNameIndex].curSellPrice;
             uint amountNecessary = amount;
             uint offers_key;
@@ -385,22 +385,29 @@ contract Exchange is owned {
                     uint volumeAtPriceFromAddress = tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount;
 
                     if (volumeAtPriceFromAddress <= amountNecessary) {
+
                         totalAmountOfEtherAvailable = volumeAtPriceFromAddress * whilePrice;
 
+                        // Overflow Check
                         require(balanceEthForAddress[msg.sender] >= totalAmountOfEtherAvailable);
                         require(balanceEthForAddress[msg.sender] - totalAmountOfEtherAvailable <= balanceEthForAddress[msg.sender]);
 
+                        // Decrease the Buyer's Account Balance of tokens by the amount the Sell Offer Order Entry is willing to accept in exchange for ETH
                         balanceEthForAddress[msg.sender] -= totalAmountOfEtherAvailable;
 
+                        // Overflow Checks
                         require(tokenBalanceForAddress[msg.sender][tokenNameIndex] + volumeAtPriceFromAddress >= tokenBalanceForAddress[msg.sender][tokenNameIndex]);
                         require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherAvailable >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
 
+                        // Increase the Buyer's Account Balance of tokens by the amount the Sell Offer Entry is willing to accept in exchange for the ETH
                         tokenBalanceForAddress[msg.sender][tokenNameIndex] += volumeAtPriceFromAddress;
+                        // Reset the amount of ETH offered by the Current Sell Order Entry to zero 0
                         tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount = 0;
+                         // Increase the Seller's Account Balance of ETH with all the ETH offered by the Current Buy Offer (in exchange for Seller's tokens)
                         balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] += totalAmountOfEtherAvailable;
                         tokens[tokenNameIndex].sellBook[whilePrice].offers_key++;
 
-                        SellOrderFulfilled(tokenNameIndex, volumeAtPriceFromAddress, whilePrice, offers_key);
+                        BuyOrderFulfilled(tokenNameIndex, volumeAtPriceFromAddress, whilePrice, offers_key);
 
                         amountNecessary -= volumeAtPriceFromAddress;
                     } else {
@@ -408,10 +415,12 @@ contract Exchange is owned {
 
                         totalAmountOfEtherNecessary = amountNecessary * whilePrice;
 
+                        // Overflow Check
                         require(balanceEthForAddress[msg.sender] - totalAmountOfEtherNecessary <= balanceEthForAddress[msg.sender]);
 
                         balanceEthForAddress[msg.sender] -= totalAmountOfEtherNecessary;
 
+                        // Overflow Check
                         require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherNecessary >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
 
                         tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount -= amountNecessary;
@@ -419,7 +428,7 @@ contract Exchange is owned {
                         tokenBalanceForAddress[msg.sender][tokenNameIndex] += amountNecessary;
                         amountNecessary = 0;
 
-                        SellOrderFulfilled(tokenNameIndex, amountNecessary, whilePrice, offers_key);
+                        BuyOrderFulfilled(tokenNameIndex, amountNecessary, whilePrice, offers_key);
                     }
 
                     if (
@@ -427,11 +436,11 @@ contract Exchange is owned {
                         tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount == 0
                     ) {
                         tokens[tokenNameIndex].amountSellPrices--;
-                        if (whilePrice == tokens[tokenNameIndex].sellBook[whilePrice].higherPrice || tokens[tokenNameIndex].buyBook[whilePrice].higherPrice == 0) {
+                        if (whilePrice == tokens[tokenNameIndex].sellBook[whilePrice].higherPrice || tokens[tokenNameIndex].sellBook[whilePrice].higherPrice == 0) {
                             tokens[tokenNameIndex].curSellPrice = 0;
                         } else {
                             tokens[tokenNameIndex].curSellPrice = tokens[tokenNameIndex].sellBook[whilePrice].higherPrice;
-                            tokens[tokenNameIndex].sellBook[tokens[tokenNameIndex].buyBook[whilePrice].higherPrice].lowerPrice = 0;
+                            tokens[tokenNameIndex].sellBook[tokens[tokenNameIndex].sellBook[whilePrice].higherPrice].lowerPrice = 0;
                         }
                     }
                     offers_key++;
@@ -644,7 +653,6 @@ contract Exchange is owned {
                         require(balanceEthForAddress[msg.sender] + totalAmountOfEtherNecessary >= balanceEthForAddress[msg.sender]);
                         require(tokenBalanceForAddress[tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].who][tokenNameIndex] + amountNecessary >= tokenBalanceForAddress[tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].who][tokenNameIndex]);
 
-                        //this guy offers more than we ask for. We reduce his stack, add the eth to us and the symbolName to him.
                         // Decrease the Buy Offer Order Entry amount by the full amount necessary to be sold by the Sell Offer
                         tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].amount -= amountNecessary;
                         // Increase the Seller's Account Balance of ETH with the equivalent ETH amount corresponding to that offered by the Current Buy Order Entry (in exchange for the Seller's token offering)
