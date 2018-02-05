@@ -16,7 +16,7 @@ npm install -g ganache-cli
 * Terminal Tab 2 - Start Ethereum Blockchain Protocol Node Simulation
 
 ```
-ganache-cli --mnemonic "copy obey episode awake damp vacant protect hold wish primary travel shy"
+ganache-cli --port="8500" --mnemonic "copy obey episode awake damp vacant protect hold wish primary travel shy"
 ```
 
 * Terminal Tab 1 - Compile and Deploy the FixedSupplyToken Contract
