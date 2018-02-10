@@ -377,14 +377,14 @@ contract Exchange is owned {
 
             uint totalAmountOfEtherAvailable = 0;
             uint whilePrice = tokens[tokenNameIndex].curSellPrice;
-            uint amountNecessary = amount;
+            uint amountOfTokensNecessary = amount;
             uint offers_key;
-            while (whilePrice <= priceInWei && amountNecessary > 0) {
+            while (whilePrice <= priceInWei && amountOfTokensNecessary > 0) {
                 offers_key = tokens[tokenNameIndex].sellBook[whilePrice].offers_key;
-                while (offers_key <= tokens[tokenNameIndex].sellBook[whilePrice].offers_length && amountNecessary > 0) {
+                while (offers_key <= tokens[tokenNameIndex].sellBook[whilePrice].offers_length && amountOfTokensNecessary > 0) {
                     uint volumeAtPriceFromAddress = tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount;
 
-                    if (volumeAtPriceFromAddress <= amountNecessary) {
+                    if (volumeAtPriceFromAddress <= amountOfTokensNecessary) {
 
                         totalAmountOfEtherAvailable = volumeAtPriceFromAddress * whilePrice;
 
@@ -413,11 +413,11 @@ contract Exchange is owned {
 
                         BuyOrderFulfilled(tokenNameIndex, volumeAtPriceFromAddress, whilePrice, offers_key);
 
-                        amountNecessary -= volumeAtPriceFromAddress;
+                        amountOfTokensNecessary -= volumeAtPriceFromAddress;
                     } else {
-                        require(tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount > amountNecessary);
+                        require(tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount > amountOfTokensNecessary);
 
-                        totalAmountOfEtherNecessary = amountNecessary * whilePrice;
+                        totalAmountOfEtherNecessary = amountOfTokensNecessary * whilePrice;
 
                         // FIXME - DEBUGGING
                         revert();
@@ -430,12 +430,12 @@ contract Exchange is owned {
                         // Overflow Check
                         require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherNecessary >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
 
-                        tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount -= amountNecessary;
+                        tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amount -= amountOfTokensNecessary;
                         balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] += totalAmountOfEtherNecessary;
-                        tokenBalanceForAddress[msg.sender][tokenNameIndex] += amountNecessary;
-                        amountNecessary = 0;
+                        tokenBalanceForAddress[msg.sender][tokenNameIndex] += amountOfTokensNecessary;
+                        amountOfTokensNecessary = 0;
 
-                        BuyOrderFulfilled(tokenNameIndex, amountNecessary, whilePrice, offers_key);
+                        BuyOrderFulfilled(tokenNameIndex, amountOfTokensNecessary, whilePrice, offers_key);
                     }
 
                     if (
@@ -455,8 +455,8 @@ contract Exchange is owned {
                 whilePrice = tokens[tokenNameIndex].curSellPrice;
             }
 
-            if (amountNecessary > 0) {
-                buyToken(symbolName, priceInWei, amountNecessary);
+            if (amountOfTokensNecessary > 0) {
+                buyToken(symbolName, priceInWei, amountOfTokensNecessary);
             }
         }
     }
@@ -544,65 +544,72 @@ contract Exchange is owned {
         }
     }
 
+    function createSellLimitOrderForTokensUnableToMatchWithBuyOrderForSeller(
+        string symbolName, uint8 tokenNameIndex, uint priceInWei, uint amountOfTokensNecessary
+    ) internal {
+        uint totalAmountOfEtherNecessary = 0;
+        // Calculate Ether Balance necessary on the Buy-side to Sell all tokens of Token Symbol Name.
+        totalAmountOfEtherNecessary = amountOfTokensNecessary * priceInWei;
+
+        // Overflow Check
+        require(totalAmountOfEtherNecessary >= amountOfTokensNecessary);
+        require(totalAmountOfEtherNecessary >= priceInWei);
+        require(tokenBalanceForAddress[msg.sender][tokenNameIndex] >= amountOfTokensNecessary);
+        require(tokenBalanceForAddress[msg.sender][tokenNameIndex] - amountOfTokensNecessary >= 0);
+        require(balanceEthForAddress[msg.sender] + totalAmountOfEtherNecessary >= balanceEthForAddress[msg.sender]);
+
+        // Deduct from Exchange Balance the Token amount for the Sell Limit Order
+        tokenBalanceForAddress[msg.sender][tokenNameIndex] -= amountOfTokensNecessary;
+
+        // Create New Sell Limit Order in the Sell Order Book if either:
+        // - No Buy Orders already exist that match the Sell Price Price Offered by the function caller
+        // - Existing Buy Price is less than the Sell Price Offered by the function caller
+
+        // Add Sell Limit Order to Order Book
+        addSellOffer(tokenNameIndex, priceInWei, amountOfTokensNecessary, msg.sender);
+
+        // Emit Event
+        LimitSellOrderCreated(tokenNameIndex, msg.sender, amountOfTokensNecessary, priceInWei, tokens[tokenNameIndex].sellBook[priceInWei].offers_length);
+    }
+
     /////////////////////////////////
     // NEW ORDER - ASK ORDER       //
     /////////////////////////////////
 
     // Market Sell Order Function
     // User wants to Sell X-Coins @ Y-Price per coin
-    function sellToken(string symbolName, uint priceInWei, uint amount) public {
+    function sellToken(string symbolName, uint priceInWei, uint amount) public payable {
         // Obtain Symbol Index for given Symbol Name
         uint8 tokenNameIndex = getSymbolIndexOrThrow(symbolName);
         uint totalAmountOfEtherNecessary = 0;
         uint totalAmountOfEtherAvailable = 0;
+        // Given `amount` Volumne of tokens to find necessary to fulfill the current Sell Order
+        uint amountOfTokensNecessary = amount;
 
         if (tokens[tokenNameIndex].amountBuyPrices == 0 || tokens[tokenNameIndex].curBuyPrice < priceInWei) {
-            // Calculate Ether Balance necessary on the Buy-side to Sell all tokens of Token Symbol Name.
-            totalAmountOfEtherNecessary = amount * priceInWei;
-
-            // Overflow Check
-            require(totalAmountOfEtherNecessary >= amount);
-            require(totalAmountOfEtherNecessary >= priceInWei);
-            require(tokenBalanceForAddress[msg.sender][tokenNameIndex] >= amount);
-            require(tokenBalanceForAddress[msg.sender][tokenNameIndex] - amount >= 0);
-            require(balanceEthForAddress[msg.sender] + totalAmountOfEtherNecessary >= balanceEthForAddress[msg.sender]);
-
-            // Deduct from Exchange Balance the Token amount for the Sell Limit Order
-            tokenBalanceForAddress[msg.sender][tokenNameIndex] -= amount;
-
-            // Create New Sell Limit Order in the Sell Order Book if either:
-            // - No Buy Orders already exist that match the Sell Price Price Offered by the function caller
-            // - Existing Buy Price is less than the Sell Price Offered by the function caller
-
-            // Add Sell Limit Order to Order Book
-            addSellOffer(tokenNameIndex, priceInWei, amount, msg.sender);
-
-            // Emit Event
-            LimitSellOrderCreated(tokenNameIndex, msg.sender, amount, priceInWei, tokens[tokenNameIndex].sellBook[priceInWei].offers_length);
+            createSellLimitOrderForTokensUnableToMatchWithBuyOrderForSeller(symbolName, tokenNameIndex, priceInWei, amountOfTokensNecessary);
         } else {
             // Execute Market Sell Order Immediately if:
             // - Existing Buy Limit Order exists that is greater than the Sell Price Offered by the function caller
 
             // Start with the Highest Buy Price (since Seller wants to exchange their tokens with the highest bidder)
             uint whilePrice = tokens[tokenNameIndex].curBuyPrice;
-            // Given `amount` Volumne of tokens to find necessary to fulfill the current Sell Order
-            uint amountNecessary = amount;
             uint offers_key;
             // Iterate through the Buy Book (Buy Offers Mapping) to Find "Highest" Buy Offer Prices 
             // (assign to Current Buy Price `whilePrice` each iteration) that are Higher than the Sell Offer
             // and whilst the Volume to find is not yet fulfilled.
             // Note: Since we are in the Sell Order `sellOrder` function we use the Buy Book
-            while (whilePrice >= priceInWei && amountNecessary > 0) {
+            while (whilePrice >= priceInWei && amountOfTokensNecessary > 0) {
                 offers_key = tokens[tokenNameIndex].buyBook[whilePrice].offers_key;
                 // Inner While - Iterate Buy Book (Buy Offers Mapping) Entries for the Current Buy Price using FIFO
-                while (offers_key <= tokens[tokenNameIndex].buyBook[whilePrice].offers_length && amountNecessary > 0) {
+                while (offers_key <= tokens[tokenNameIndex].buyBook[whilePrice].offers_length && amountOfTokensNecessary > 0) {
                     uint volumeAtPriceFromAddress = tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].amount;
                     // Case when Current Buy Order Entry Volume Only Partially fulfills the Sell Order Volume
                     // (i.e. Sell Order wants to sell more than Current Buy Order Entry requires)
                     // then we achieve Partial exchange from Sell Order to the Buy Order Entry and then
                     // move to Next Address with a Buy Order Entry at the Current Buy Price for the symbolName
                     // i.e. Sell Order amount is for 1000 tokens but Current Buy Order is for 500 tokens at Current Buy Price 
-                    if (volumeAtPriceFromAddress <= amountNecessary) {
+                    if (volumeAtPriceFromAddress <= amountOfTokensNecessary) {
                         // Amount of Ether available to be exchanged in the Current Buy Book Offers Entry at the Current Buy Price 
                         totalAmountOfEtherAvailable = volumeAtPriceFromAddress * whilePrice;
 
@@ -636,7 +643,7 @@ contract Exchange is owned {
                         SellOrderFulfilled(tokenNameIndex, volumeAtPriceFromAddress, whilePrice, offers_key);
 
                         // Decrease the amount necessary to be sold from the Seller's Offer by the amount of of tokens just exchanged for ETH with the Buyer at the Current Buy Order Price
-                        amountNecessary -= volumeAtPriceFromAddress;
+                        amountOfTokensNecessary -= volumeAtPriceFromAddress;
 
                     // Case when Sell Order Volume Only Partially fulfills the Current Buy Order Entry Volume 
                     // (i.e. Sell Order wants to sell more than the Current Buy Order Entry needs)
@@ -644,34 +651,34 @@ contract Exchange is owned {
                     // i.e. Sell Order amount is for 500 tokens and Current Buy Order is for 1000 tokens at Current Buy Price 
                     } else {
                         // Check that the equivalent value in tokens of the Buy Offer Order Entry is actually more than Sell Offer Volume 
-                        require(volumeAtPriceFromAddress - amountNecessary > 0);
+                        require(volumeAtPriceFromAddress - amountOfTokensNecessary > 0);
 
                         // Calculate amount in ETH necessary to buy the Seller's tokens based on the Current Buy Price
-                        totalAmountOfEtherNecessary = amountNecessary * whilePrice;
+                        totalAmountOfEtherNecessary = amountOfTokensNecessary * whilePrice;
 
                         // Overflow Check
-                        require(tokenBalanceForAddress[msg.sender][tokenNameIndex] >= amountNecessary);
+                        require(tokenBalanceForAddress[msg.sender][tokenNameIndex] >= amountOfTokensNecessary);
 
                         // Decrease the Seller's Account Balance of tokens by amount they are offering since the Buy Offer Order Entry is willing to accept it all in exchange for ETH
-                        tokenBalanceForAddress[msg.sender][tokenNameIndex] -= amountNecessary;
+                        tokenBalanceForAddress[msg.sender][tokenNameIndex] -= amountOfTokensNecessary;
 
                         // Overflow Check
-                        require(tokenBalanceForAddress[msg.sender][tokenNameIndex] >= amountNecessary);
+                        require(tokenBalanceForAddress[msg.sender][tokenNameIndex] >= amountOfTokensNecessary);
                         require(balanceEthForAddress[msg.sender] + totalAmountOfEtherNecessary >= balanceEthForAddress[msg.sender]);
-                        require(tokenBalanceForAddress[tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].who][tokenNameIndex] + amountNecessary >= tokenBalanceForAddress[tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].who][tokenNameIndex]);
+                        require(tokenBalanceForAddress[tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].who][tokenNameIndex] + amountOfTokensNecessary >= tokenBalanceForAddress[tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].who][tokenNameIndex]);
 
                         // Decrease the Buy Offer Order Entry amount by the full amount necessary to be sold by the Sell Offer
-                        tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].amount -= amountNecessary;
+                        tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].amount -= amountOfTokensNecessary;
                         // Increase the Seller's Account Balance of ETH with the equivalent ETH amount corresponding to that offered by the Current Buy Order Entry (in exchange for the Seller's token offering)
                         balanceEthForAddress[msg.sender] += totalAmountOfEtherNecessary;
                         // Increase the Buyer's Account Balance of tokens (for the matching Buy Order Entry) with all the tokens sold by the Sell Order
-                        tokenBalanceForAddress[tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].who][tokenNameIndex] += amountNecessary;
+                        tokenBalanceForAddress[tokens[tokenNameIndex].buyBook[whilePrice].offers[offers_key].who][tokenNameIndex] += amountOfTokensNecessary;
 
                         // Emit Event
-                        SellOrderFulfilled(tokenNameIndex, amountNecessary, whilePrice, offers_key);
+                        SellOrderFulfilled(tokenNameIndex, amountOfTokensNecessary, whilePrice, offers_key);
 
                         // Set the remaining amount necessary to be sold by the Sell Order to zero 0 since we have fulfilled the Sell Offer
-                        amountNecessary = 0;
+                        amountOfTokensNecessary = 0;
                     }
 
                     // Case when the Current Buy Offer is the last element in the list for the Current Buy Order Offer Price
@@ -689,7 +696,7 @@ contract Exchange is owned {
                             tokens[tokenNameIndex].curBuyPrice = 0;
                         } else {
                             // REFERENCE "A"
-                            // Case when not yet fulfilled `amountNecessary` Volume of Sell Offer then
+                            // Case when not yet fulfilled `amountOfTokensNecessary` Volume of Sell Offer then
                             // set Proposed Current Buy Price to the Next Lower Buy Price in the Linked List
                             // so we move to the Next Lowest Entry in the Buy Book Offers Linked List
                             tokens[tokenNameIndex].curBuyPrice = tokens[tokenNameIndex].buyBook[whilePrice].lowerPrice;
@@ -706,9 +713,10 @@ contract Exchange is owned {
             }
 
             // Case when unable to find a suitable Buy Order Offer to perform an exchange with the Seller's tokens 
-            if (amountNecessary > 0) {
+            if (amountOfTokensNecessary > 0) {
                 // Add a Sell Limit Order to the Sell Book since could not find a Market Order to exchange Seller's tokens immediately
-                sellToken(symbolName, priceInWei, amountNecessary);
+
+                createSellLimitOrderForTokensUnableToMatchWithBuyOrderForSeller(symbolName, tokenNameIndex, priceInWei, amountOfTokensNecessary);
             }
         }
     }
