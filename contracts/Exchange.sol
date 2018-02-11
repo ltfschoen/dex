@@ -87,7 +87,7 @@ contract Exchange is owned {
     event BuyOrderCanceled(uint indexed _symbolIndex, uint _priceInWei, uint _orderKey);
     event SellOrderCanceled(uint indexed _symbolIndex, uint _priceInWei, uint _orderKey);
 
-    event Debug(uint _test1, uint _test2, uint _test3);
+    event Debug(uint _test1, uint _test2, uint _test3, uint _test4);
 
     ////////////////////////////////
     // DEPOSIT / WITHDRAWAL ETHER //
@@ -354,94 +354,119 @@ contract Exchange is owned {
         if (tokens[tokenNameIndex].amountSellPrices == 0 || tokens[tokenNameIndex].curSellPrice > priceInWei) {
             createBuyLimitOrderForTokensUnableToMatchWithSellOrderForBuyer(symbolName, tokenNameIndex, priceInWei, amountOfTokensNecessary, totalAmountOfEtherNecessary);
         } else {
-            Debug(tokens[tokenNameIndex].amountSellPrices, tokens[tokenNameIndex].curSellPrice, priceInWei);
+            // Debug(tokens[tokenNameIndex].amountSellPrices, tokens[tokenNameIndex].curSellPrice, priceInWei);
             // revert();
-            // // Execute Market Buy Order Immediately if:
-            // // - Existing Sell Limit Order exists that is less than or equal to the Buy Price Offered by the function caller
 
-            // uint totalAmountOfEtherAvailable = 0;
-            // uint whilePrice = tokens[tokenNameIndex].curSellPrice;
-            // uint amountOfTokensNecessary = amount;
-            // uint offers_key;
-            // while (whilePrice <= priceInWei && amountOfTokensNecessary > 0) {
-            //     offers_key = tokens[tokenNameIndex].sellBook[whilePrice].offers_key;
-            //     while (offers_key <= tokens[tokenNameIndex].sellBook[whilePrice].offers_length && amountOfTokensNecessary > 0) {
-            //         uint volumeAtPriceFromAddress = tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens;
+            // Execute Market Buy Order Immediately if:
+            // - Existing Sell Limit Order exists that is less than or equal to the Buy Price Offered by the function caller
 
-            //         if (volumeAtPriceFromAddress <= amountOfTokensNecessary) {
+            uint totalAmountOfEtherAvailable = 0;
+            // 09 Unit Test: `whilePrice` initially 4 finney (i.e. 4000000000000000 Wei)
+            uint whilePrice = tokens[tokenNameIndex].curSellPrice;
+            // `offers_key` declaration initialises it to 0
+            uint offers_key;
 
-            //             totalAmountOfEtherAvailable = volumeAtPriceFromAddress * whilePrice;
+            // 09 Unit Test: `priceInWei` initially 4 finney (i.e. 4000000000000000 Wei)
+            while (whilePrice <= priceInWei && amountOfTokensNecessary > 0) {
+                // 09 Unit Test: `offers_key` assigned to 1
+                offers_key = tokens[tokenNameIndex].sellBook[whilePrice].offers_key;
+                // 09 Unit Test: `tokens[tokenNameIndex].sellBook[whilePrice].offers_length` is 1
+                //              i.e.                    .sellBook[4000000000000000]
+                // 09 Unit Test: `amountOfTokensNecessary` is 5
+                while (offers_key <= tokens[tokenNameIndex].sellBook[whilePrice].offers_length && amountOfTokensNecessary > 0) {
+                    // 09 Unit Test: `volumeAtPriceFromAddress` assigned to 5
+                    uint volumeAtPriceFromAddress = tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens;
 
-            //             // Overflow Check
-            //             require(balanceEthForAddress[msg.sender] >= totalAmountOfEtherAvailable);
-            //             require(balanceEthForAddress[msg.sender] - totalAmountOfEtherAvailable <= balanceEthForAddress[msg.sender]);
+                    // 5 <= 5
+                    if (volumeAtPriceFromAddress <= amountOfTokensNecessary) {
+                        // 20000000000000000 = 5 * 4000000000000000
+                        totalAmountOfEtherAvailable = volumeAtPriceFromAddress * whilePrice;
 
-            //             // Decrease the Buyer's Account Balance of tokens by the amount the Sell Offer Order Entry is willing to accept in exchange for ETH
-            //             balanceEthForAddress[msg.sender] -= totalAmountOfEtherAvailable;
+                        // Overflow Check
+                        // 09 Unit Test: `balanceEthForAddress[msg.sender]` is initially 3000000000000000000 (3 ETH)
+                        require(balanceEthForAddress[msg.sender] >= totalAmountOfEtherAvailable);
+                        require(balanceEthForAddress[msg.sender] - totalAmountOfEtherAvailable <= balanceEthForAddress[msg.sender]);
 
-            //             // Overflow Checks
-            //             require(tokenBalanceForAddress[msg.sender][tokenNameIndex] + volumeAtPriceFromAddress >= tokenBalanceForAddress[msg.sender][tokenNameIndex]);
-                        
-            //             // FIXME - DEBUGGING
-            //             // revert();
+                        // Decrease the Buyer's Account Balance of tokens by the amount the Sell Offer Order Entry is willing to accept in exchange for ETH
+                        balanceEthForAddress[msg.sender] -= totalAmountOfEtherAvailable;
 
-            //             require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherAvailable >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
+                        Debug(
+                            tokenBalanceForAddress[msg.sender][tokenNameIndex],
+                            volumeAtPriceFromAddress,
+                            0,
+                            0
+                        );
 
-            //             // Increase the Buyer's Account Balance of tokens by the amount the Sell Offer Entry is willing to accept in exchange for the ETH
-            //             tokenBalanceForAddress[msg.sender][tokenNameIndex] += volumeAtPriceFromAddress;
-            //             // Reset the amount of ETH offered by the Current Sell Order Entry to zero 0
-            //             tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens = 0;
-            //              // Increase the Seller's Account Balance of ETH with all the ETH offered by the Current Buy Offer (in exchange for Seller's tokens)
-            //             balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] += totalAmountOfEtherAvailable;
-            //             tokens[tokenNameIndex].sellBook[whilePrice].offers_key++;
+                        // FIXME: Crashes with `out of gas` error
+                        // Debug(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who],0,0,0);
 
-            //             BuyOrderFulfilled(tokenNameIndex, volumeAtPriceFromAddress, whilePrice, offers_key);
+                        // FIXME: Crashes with `out of gas` error
+                        // Overflow Checks
+                        // require(balanceEthForAddress[msg.sender] >= totalAmountOfEtherAvailable);
+                        // require(uint(1) > uint(0));
+                        // require(tokenBalanceForAddress[msg.sender][tokenNameIndex] + volumeAtPriceFromAddress >= tokenBalanceForAddress[msg.sender][tokenNameIndex]);
 
-            //             amountOfTokensNecessary -= volumeAtPriceFromAddress;
-            //         } else {
-            //             require(tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens > amountOfTokensNecessary);
+                        // FIXME - DEBUGGING
+                        // revert();
 
-            //             totalAmountOfEtherNecessary = amountOfTokensNecessary * whilePrice;
+                        // FIXME: Crashes with `out of gas` error
+                        // require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherAvailable >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
 
-            //             // FIXME - DEBUGGING
-            //             // revert();
+                        // Increase the Buyer's Account Balance of tokens by the amount the Sell Offer Entry is willing to accept in exchange for the ETH
+                        // tokenBalanceForAddress[msg.sender][tokenNameIndex] += volumeAtPriceFromAddress;
+                        // // Reset the amount of ETH offered by the Current Sell Order Entry to zero 0
+                        // tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens = 0;
+                        //  // Increase the Seller's Account Balance of ETH with all the ETH offered by the Current Buy Offer (in exchange for Seller's tokens)
+                        // balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] += totalAmountOfEtherAvailable;
+                        // tokens[tokenNameIndex].sellBook[whilePrice].offers_key++;
 
-            //             // Overflow Check
-            //             require(balanceEthForAddress[msg.sender] - totalAmountOfEtherNecessary <= balanceEthForAddress[msg.sender]);
+                        // BuyOrderFulfilled(tokenNameIndex, volumeAtPriceFromAddress, whilePrice, offers_key);
 
-            //             balanceEthForAddress[msg.sender] -= totalAmountOfEtherNecessary;
+                        // amountOfTokensNecessary -= volumeAtPriceFromAddress;
+                    // } else {
+                    //     require(tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens > amountOfTokensNecessary);
 
-            //             // Overflow Check
-            //             require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherNecessary >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
+                    //     totalAmountOfEtherNecessary = amountOfTokensNecessary * whilePrice;
 
-            //             tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens -= amountOfTokensNecessary;
-            //             balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] += totalAmountOfEtherNecessary;
-            //             tokenBalanceForAddress[msg.sender][tokenNameIndex] += amountOfTokensNecessary;
-            //             amountOfTokensNecessary = 0;
+                    //     // FIXME - DEBUGGING
+                    //     // revert();
 
-            //             BuyOrderFulfilled(tokenNameIndex, amountOfTokensNecessary, whilePrice, offers_key);
-            //         }
+                    //     // Overflow Check
+                    //     require(balanceEthForAddress[msg.sender] - totalAmountOfEtherNecessary <= balanceEthForAddress[msg.sender]);
 
-            //         if (
-            //             offers_key == tokens[tokenNameIndex].sellBook[whilePrice].offers_length &&
-            //             tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens == 0
-            //         ) {
-            //             tokens[tokenNameIndex].amountSellPrices--;
-            //             if (whilePrice == tokens[tokenNameIndex].sellBook[whilePrice].higherPrice || tokens[tokenNameIndex].sellBook[whilePrice].higherPrice == 0) {
-            //                 tokens[tokenNameIndex].curSellPrice = 0;
-            //             } else {
-            //                 tokens[tokenNameIndex].curSellPrice = tokens[tokenNameIndex].sellBook[whilePrice].higherPrice;
-            //                 tokens[tokenNameIndex].sellBook[tokens[tokenNameIndex].sellBook[whilePrice].higherPrice].lowerPrice = 0;
-            //             }
-            //         }
-            //         offers_key++;
-            //     }
-            //     whilePrice = tokens[tokenNameIndex].curSellPrice;
-            // }
+                    //     balanceEthForAddress[msg.sender] -= totalAmountOfEtherNecessary;
 
-            // if (amountOfTokensNecessary > 0) {
-            //     buyToken(symbolName, priceInWei, amountOfTokensNecessary);
-            // }
+                    //     // Overflow Check
+                    //     require(balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] + totalAmountOfEtherNecessary >= balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who]);
+
+                    //     tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens -= amountOfTokensNecessary;
+                    //     balanceEthForAddress[tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].who] += totalAmountOfEtherNecessary;
+                    //     tokenBalanceForAddress[msg.sender][tokenNameIndex] += amountOfTokensNecessary;
+                        amountOfTokensNecessary = 0;
+
+                        BuyOrderFulfilled(tokenNameIndex, amountOfTokensNecessary, whilePrice, offers_key);
+                    }
+
+                    // if (
+                    //     offers_key == tokens[tokenNameIndex].sellBook[whilePrice].offers_length &&
+                    //     tokens[tokenNameIndex].sellBook[whilePrice].offers[offers_key].amountTokens == 0
+                    // ) {
+                    //     tokens[tokenNameIndex].amountSellPrices--;
+                    //     if (whilePrice == tokens[tokenNameIndex].sellBook[whilePrice].higherPrice || tokens[tokenNameIndex].sellBook[whilePrice].higherPrice == 0) {
+                    //         tokens[tokenNameIndex].curSellPrice = 0;
+                    //     } else {
+                    //         tokens[tokenNameIndex].curSellPrice = tokens[tokenNameIndex].sellBook[whilePrice].higherPrice;
+                    //         tokens[tokenNameIndex].sellBook[tokens[tokenNameIndex].sellBook[whilePrice].higherPrice].lowerPrice = 0;
+                    //     }
+                    // }
+                    offers_key++;
+                }
+                whilePrice = tokens[tokenNameIndex].curSellPrice;
+            }
+
+            if (amountOfTokensNecessary > 0) {
+                createBuyLimitOrderForTokensUnableToMatchWithSellOrderForBuyer(symbolName, tokenNameIndex, priceInWei, amountOfTokensNecessary, totalAmountOfEtherNecessary);
+            }
         }
     }
 

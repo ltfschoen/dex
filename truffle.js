@@ -6,7 +6,7 @@ module.exports = {
       host: "127.0.0.1",
       port: 8500,
       network_id: "3", // Match any network id
-      gas: 4712388,
+      gas: 4712388, // Block Gas Limit
       gasPrice: 100000000000,
       // Mnemonic: "copy obey episode awake damp vacant protect hold wish primary travel shy"
       from: "0x7c06350cb8640a113a618004a828d3411a4f32d3"

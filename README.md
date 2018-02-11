@@ -111,3 +111,11 @@ truffle migrate --network development
 ```
 truffle test
 ```
+
+# Troubleshooting
+
+* Try restarting Ganache TestRPC if you encounter error `sender doesn't have enough funds to send tx. The upfront cost is: x and the sender's account only has: y`
+
+* Fix error `Error: Error: Exceeds block gas limit` that may occur when sending Gas Limit say of `50000000` when truffle.js has `gas` property set as `gas: 4712388,`, by changing to a smaller value: `myExchangeInstance.buyToken("FIXED", web3.toWei(4, "finney"), 5, {from: accounts[0], gas: 4000000});`
+
+* Unknown how to resolve `Error: VM Exception while processing transaction: out of gas`. In the `buyToken` function it always occurs after a certain line of code.
