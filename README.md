@@ -16,7 +16,13 @@ npm install -g ganache-cli
 * Terminal Tab 2 - Start Ethereum Blockchain Protocol Node Simulation
 
 ```
-ganache-cli --port="8500" --mnemonic "copy obey episode awake damp vacant protect hold wish primary travel shy" --verbose --networkId=3 --gasLimit=4712388 --gasPrice=100000000000
+ganache-cli \
+  --port="8500" \
+  --mnemonic "copy obey episode awake damp vacant protect hold wish primary travel shy" \
+  --verbose \
+  --networkId=3 \
+  --gasLimit=7984452 \
+  --gasPrice=2000000000;
 ```
 
 * Terminal Tab 1 - Compile and Deploy the FixedSupplyToken Contract
@@ -118,4 +124,4 @@ truffle test
 
 * Fix error `Error: Error: Exceeds block gas limit` that may occur when sending Gas Limit say of `50000000` when truffle.js has `gas` property set as `gas: 4712388,`, by changing to a smaller value: `myExchangeInstance.buyToken("FIXED", web3.toWei(4, "finney"), 5, {from: accounts[0], gas: 4000000});`
 
-* Unknown how to resolve `Error: VM Exception while processing transaction: out of gas`. In the `buyToken` function it always occurs after a certain line of code.
+* Fix `Error: VM Exception while processing transaction: out of gas`. In the `buyToken` function it always occurs after a certain line of code. Simply increase the Gas Limit to the Mainnet's limit (currently shown as `7984452` at https://ethstats.net/) in both Ganache CLI Flags and in truffle.js
