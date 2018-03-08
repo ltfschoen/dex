@@ -1,10 +1,17 @@
 # Setup 
 
+* Fork and clone the repository
+
 * [Install NVM](https://github.com/creationix/nvm)
+
+* Switch to latest Node version
+
+```
+nvm use
+```
 
 * [Install Geth](https://github.com/ethereum/go-ethereum/wiki/Building-Ethereum)
 
-* Fork and clone the repository
 
 * Terminal Tab 1 - Install Truffle
   * Reference: http://truffleframework.com/
