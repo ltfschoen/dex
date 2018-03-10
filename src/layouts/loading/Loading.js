@@ -6,7 +6,8 @@ class Loading extends Component {
   }
 
   render() {
-    if (this.props.web3.status === 'failed') {
+    if (this.props.web3.status === 'failed')
+    {
       return(
         <main className="container loading-screen">
           <div className="pure-g">
@@ -17,20 +18,28 @@ class Loading extends Component {
           </div>
         </main>
       )
-    } else if (this.props.drizzleStatus.initialized) {
-      return Children.only(this.props.children)
-    } else {
-      return(
-        <main className="container loading-screen">
-          <div className="pure-g">
-            <div className="pure-u-1-1">
-              <h1>⚙️</h1>
-              <p>Loaded dapp successfully</p>
-            </div>
-          </div>
-        </main>
-      )
     }
+
+    if (this.props.drizzleStatus.initialized)
+    {
+      return Children.only(this.props.children)
+    }
+
+    console.log("accounts: ", this.props.accounts);
+    console.log("contracts: ", this.props.contracts);
+    console.log("drizzleStatus: ", this.props.drizzleStatus);
+    console.log("web3: ", this.props.web3);
+
+    return(
+      <main className="container loading-screen">
+        <div className="pure-g">
+          <div className="pure-u-1-1">
+            <h1>⚙️</h1>
+            <p>Loading dapp...</p>
+          </div>
+        </div>
+      </main>
+    )
   }
 }
 
