@@ -11,9 +11,10 @@ import HomeContainer from './layouts/home/HomeContainer'
 import LoadingContainer from './layouts/loading/LoadingContainer'
 
 // Contracts
-import ComplexStorage from './../build/contracts/ComplexStorage.json'
-import SimpleStorage from './../build/contracts/SimpleStorage.json'
-import TutorialToken from './../build/contracts/TutorialToken.json'
+import ERC20Interface from './../build/contracts/ERC20Interface.json'
+import Exchange from './../build/contracts/Exchange.json'
+import FixedSupplyToken from './../build/contracts/FixedSupplyToken.json'
+import owned from './../build/contracts/owned.json'
 
 // Redux Store
 import store from './store'
@@ -27,16 +28,34 @@ const options = {
     block: false,
     fallback: {
       type: 'ws',
-      url: 'ws://127.0.0.1:8545'
+      url: 'ws://127.0.0.1:8500'
     }
   },
   contracts: [
-    ComplexStorage,
-    SimpleStorage,
-    TutorialToken
+    ERC20Interface,
+    Exchange,
+    FixedSupplyToken,
+    owned
   ],
   events: {
-    SimpleStorage: ['StorageSet']
+    Exchange: [
+      'TokenAddedToSystem',
+      'DepositForTokenReceived',
+      'WithdrawalToken',
+      'DepositForEthReceived',
+      'WithdrawalEth',
+      'LimitBuyOrderCreated',
+      'LimitSellOrderCreated',
+      'BuyOrderFulfilled',
+      'SellOrderFulfilled',
+      'BuyOrderCanceled',
+      'SellOrderCanceled',
+      'Debug'
+    ],
+    ERC20Interface: [
+      'Transfer', 
+      'Approval'
+    ]
   }
 }
 
