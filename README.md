@@ -4,14 +4,11 @@
 
 * [Install NVM](https://github.com/creationix/nvm)
 
-* Switch to latest Node version
+* Switch to Node version specified in .nvmrc
 
 ```
-nvm use
+nvm install
 ```
-
-* [Install Geth](https://github.com/ethereum/go-ethereum/wiki/Building-Ethereum)
-
 
 * Terminal Tab 1 - Install Truffle
   * Reference: http://truffleframework.com/
@@ -36,6 +33,31 @@ ganache-cli \
   --networkId=3 \
   --gasLimit=7984452 \
   --gasPrice=2000000000;
+```
+
+* Optionally [Install Geth](https://github.com/ethereum/go-ethereum/wiki/Building-Ethereum) and run the Testnet using Geth in the project directory:
+
+  * Show installation directory of Geth and Go, and show Go path [Reference](https://github.com/ethereum/go-ethereum/wiki/Developers%27-Guide)
+
+```
+which geth
+which go
+echo $GOPATH
+geth version
+```
+
+  * Show where Geth Chain directories are stored:
+
+```
+find ~ -type d -name 'chaindata'
+```
+
+  * [Install or Upgrade existing version of Geth](https://github.com/ethereum/go-ethereum/wiki/Installation-Instructions-for-Mac) (if not installed using Homebrew)
+
+```
+brew tap ethereum/ethereum
+brew install ethereum
+brew upgrade ethereum
 ```
 
 * Terminal Tab 1 - Compile and Deploy the FixedSupplyToken Contract
