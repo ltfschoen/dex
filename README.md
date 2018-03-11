@@ -187,6 +187,30 @@ truffle migrate --network development
 truffle test
 ```
 
+# Infura
+
+* Refer to Truffle Infura instructions http://truffleframework.com/tutorials/using-infura-custom-provider
+* Refer to blog post with Infura setup instructions https://blog.infura.io/getting-started-with-infura-28e41844cc89
+* Sign-up to Infura https://infura.io/signup
+* Check email for Infura access token
+* Add Infura URLs to .env file, prefix with `REACT_APP_`, and use with `process.env.REACT_APP_`
+
+* Environment variables
+  * Create a .env file in the root directory to protect Infura keys from being published on Github:
+
+```
+NODE_ENV="development"
+REACT_APP_INFURA_ROPSTEN_TESTNET_URL="https://mainnet.infura.io/<ENTER_INFURA_TOKEN_HERE>"
+```
+
+  * Prefix all environment variables in the .env file with REACT_APP_ as this is a requirement of create-create-app https://github.com/facebook/create-react-app/blob/master/packages/react-scripts/template/README.md#adding-custom-environment-variables.
+
+  * Use the environment variables in the code implementation. i.e. `const web3 = new Web3(process.env.REACT_APP_INFURA_ROPSTEN_TESTNET_URL, net);`
+
+  * Create a .gitignore file with `touch .gitignore` whose contents contains the line `.env`
+
+  * Update package.json with the environment variable i.e. `"start": "NODE_ENV=development node scripts/start.js",`
+
 # Troubleshooting
 
 * Try restarting Ganache TestRPC if you encounter error `sender doesn't have enough funds to send tx. The upfront cost is: x and the sender's account only has: y`

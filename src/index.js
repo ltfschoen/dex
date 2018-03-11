@@ -28,6 +28,7 @@ const options = {
     block: false,
     fallback: {
       type: 'ws',
+      // url: `wss://rinkeby.infura.io/_ws/${process.env.REACT_APP_INFURA_ROPSTEN_TESTNET_URL}`
       url: 'ws://127.0.0.1:8500'
     }
   },

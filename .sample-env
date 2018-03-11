@@ -1,0 +1,8 @@
+NODE_ENV=development
+
+INFURA_MAINNET_URL=https://mainnet.infura.io/<INSERT_ACCESS_TOKEN>
+INFURA_ROPSTEN_TESTNET_URL=https://ropsten.infura.io/<INSERT_ACCESS_TOKEN>
+INFURA_RINKEBY_TESTNET_URL=https://rinkeby.infura.io/<INSERT_ACCESS_TOKEN>
+INFURA_KOVAN_TESTNET_URL=https://kovan.infura.io/<INSERT_ACCESS_TOKEN>
+INFURA_IPFS_GATEWAY_URL=https://ipfs.infura.io
+INFURA_IPFS_RPC_URL=https://ipfs.infura.io:5001 

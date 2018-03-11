@@ -1,4 +1,6 @@
 import React, { Component, Children } from 'react'
+import net from 'net';
+import Web3 from 'web3';
 
 class Loading extends Component {
   constructor(props, context) {
@@ -29,6 +31,9 @@ class Loading extends Component {
     console.log("contracts: ", this.props.contracts);
     console.log("drizzleStatus: ", this.props.drizzleStatus);
     console.log("web3: ", this.props.web3);
+    console.log("Rinkeby Testnet URL: ", process.env.REACT_APP_INFURA_RINKEBY_TESTNET_URL)
+    const web3 = new Web3(process.env.REACT_APP_INFURA_ROPSTEN_TESTNET_URL, net);
+    console.log(web3)
 
     return(
       <main className="container loading-screen">
